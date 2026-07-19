@@ -1,0 +1,50 @@
+{
+  "name": "tabby-aws-ssm-ssh",
+  "version": "1.0.0",
+  "description": "AWS SSM SSH plugin for Tabby",
+  "author": "Antigravity <antigravity@google.com>",
+  "license": "MIT",
+  "keywords": [
+    "tabby-plugin"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "prebuild": "node scripts/resolve-tabby-paths.js",
+    "build": "webpack --progress --color",
+    "prewatch": "node scripts/resolve-tabby-paths.js",
+    "watch": "webpack --progress --color --watch",
+    "install-plugin": "node scripts/install-plugin.js",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@angular/common": "^15.0.0",
+    "@angular/compiler": "^15.0.0",
+    "@angular/core": "^15.0.0",
+    "@angular/forms": "^15.0.0",
+    "@aws-sdk/client-ssm": "^3.500.0",
+    "@aws-sdk/credential-providers": "^3.500.0",
+    "@ng-bootstrap/ng-bootstrap": "^14.2.0",
+    "@types/node": "^18.0.0",
+    "@types/ssh2": "^1.11.19",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.5.10",
+    "css-loader": "^6.8.1",
+    "html-loader": "^4.2.0",
+    "ngx-toastr": "^16.0.0",
+    "node-loader": "^2.1.0",
+    "rxjs": "^7.8.1",
+    "sass": "^1.69.5",
+    "sass-loader": "^13.3.2",
+    "ssh2": "^1.15.0",
+    "to-string-loader": "^1.2.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^4.9.5",
+    "uuid": "^9.0.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "ws": "^8.16.0"
+  },
+  "peerDependencies": {
+    "tabby-core": "*"
+  }
+}
