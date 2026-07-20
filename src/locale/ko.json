@@ -21,7 +21,5 @@
     "KeePass plugin is not installed or enabled.": "KeePass 플러그인이 설치되어 있지 않거나 비활성화되어 있습니다.",
     "No matching KeePass entry found.": "일치하는 KeePass 항목을 찾을 수 없습니다.",
     "The KeePass entry has no attachments.": "이 KeePass 항목에는 첨부파일이 없습니다.",
-    "Valid private key.": "유효한 개인키입니다.",
-    "This file is not a valid private key.": "이 파일은 유효한 개인키가 아닙니다.",
-    "This key is passphrase-protected, which is not supported.": "이 키는 passphrase로 보호되어 있어 지원하지 않습니다."
+    "No private key attachment found on this entry.": "이 항목에서 유효한 개인키 첨부파일을 찾지 못했습니다."
 }

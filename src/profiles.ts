@@ -22,9 +22,6 @@ export interface AwsSsmSshProfile extends ConnectableTerminalProfile {
         privateKeyPath?: string;
         // SSH 개인키로 쓸 KeePass 엔트리의 첨부파일명 (엔트리는 항상 instanceId로 조회)
         keepassPrivateKeyAttachment?: string;
-
-        // KeePass 검색어 (AWS 자격증명용 엔트리 조회에만 사용, 기본값은 instanceId)
-        keepassSearchTerm?: string;
     };
 }
 
@@ -41,7 +38,6 @@ export class AwsSsmSshProfileProvider extends ProfileProvider<AwsSsmSshProfile> 
             instanceId: '',
             awsProfile: 'default',
             sshAuthMethod: 'static',
-            keepassSearchTerm: '',
         },
     };
 
@@ -58,7 +54,6 @@ export class AwsSsmSshProfileProvider extends ProfileProvider<AwsSsmSshProfile> 
                     instanceId: '',
                     awsProfile: 'default',
                     sshAuthMethod: 'static',
-                    keepassSearchTerm: '',
                 },
                 isBuiltin: true,
                 isTemplate: true,

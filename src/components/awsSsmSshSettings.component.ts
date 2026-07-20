@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AwsSsmSshProfile } from '../profiles';
 import { AwsSsmVaultStorageService } from '../services/awsSsmVaultStorage.service';
 import { PrivateKeyPromptModalComponent } from './privateKeyPromptModal.component';
-import { resolveKeePassService, getKeePassBinaryBuffer, classifyKeePassPrivateKey, KeePassKeyClassification } from '../session/tunnelSsh.session';
+import { resolveKeePassService, getKeePassBinaryBuffer, classifyKeePassPrivateKey } from '../session/tunnelSsh.session';
 
 // 언어를 추가하려면 src/locale/<code>.json 파일만 만들고 여기 등록하면 됨.
 // @ngx-translate/core는 Tabby가 플러그인에 노출하지 않는 모듈이라 TranslateService를 직접
@@ -144,27 +144,6 @@ const locales: Record<string, Record<string, string>> = {
                     </div>
                     <div class="text-muted small mt-1" *ngIf="!profile.options.instanceId">{{ t('Enter Instance ID first.') }}</div>
                     <div class="text-danger small mt-1" *ngIf="keepassAttachmentsError">{{ keepassAttachmentsError }}</div>
-                    <div class="text-muted small mt-1" *ngIf="validatingKeepassAttachment">{{ t('Loading...') }}</div>
-                    <div class="text-success small mt-1" *ngIf="keepassAttachmentValidation?.ok">✅ {{ t('Valid private key.') }}</div>
-                    <div class="text-danger small mt-1" *ngIf="keepassAttachmentValidation && !keepassAttachmentValidation.ok && !keepassAttachmentValidation.encrypted">
-                        ⚠️ {{ t('This file is not a valid private key.') }}
-                    </div>
-                    <div class="text-danger small mt-1" *ngIf="keepassAttachmentValidation?.encrypted">
-                        ⚠️ {{ t('This key is passphrase-protected, which is not supported.') }}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- KeePass Search Term (AWS 자격증명 조회용, SSH 개인키는 항상 Instance ID로 조회) -->
-        <div *ngIf="profile.options.awsAuthMethod === 'keypass'">
-            <hr />
-            <h5 class="mb-3">KeePass Configuration</h5>
-            <div class="form-group row mb-3">
-                <label class="col-sm-3 col-form-label">KeePass Entry Search Term</label>
-                <div class="col-sm-9">
-                    <input type="text" class="form-control" [(ngModel)]="profile.options.keepassSearchTerm" placeholder="i-xxxxxxxxxxxxxxxxx (Defaults to Instance ID)" />
-                    <small class="form-text text-muted">KeePass entry URL matching 'ssh://&lt;Search Term&gt;' will be used.</small>
                 </div>
             </div>
         </div>
@@ -181,8 +160,6 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
     keepassAttachments: string[] = [];
     loadingKeepassAttachments = false;
     keepassAttachmentsError = '';
-    keepassAttachmentValidation: KeePassKeyClassification | null = null;
-    validatingKeepassAttachment = false;
 
     constructor (
         private localeService: LocaleService,
@@ -213,7 +190,6 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
 
     set keepassPrivateKeyAttachment (value: string | null) {
         this.profile.options.keepassPrivateKeyAttachment = value ?? undefined;
-        this.validateKeepassPrivateKeyAttachment();
     }
 
     async ngOnInit() {
@@ -224,7 +200,6 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
         this.profile.options.region = this.profile.options.region || 'us-east-1';
         this.profile.options.awsProfile = this.profile.options.awsProfile || 'default';
         this.profile.options.sshAuthMethod = this.profile.options.sshAuthMethod || 'static';
-        this.profile.options.keepassSearchTerm = this.profile.options.keepassSearchTerm || '';
 
         this.awsProfiles = this.getAwsProfiles();
 
@@ -236,9 +211,6 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
 
         if (this.profile.options.sshAuthMethod === 'keypass') {
             await this.loadKeepassAttachments();
-            if (this.profile.options.keepassPrivateKeyAttachment) {
-                await this.validateKeepassPrivateKeyAttachment();
-            }
         }
     }
 
@@ -248,6 +220,8 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
         }
     }
 
+    // 첨부파일 이름을 나열만 하는 게 아니라, 각각을 ssh2의 진짜 키 파서로 열어봐서
+    // 개인키로 판별되는 것만 드롭다운에 남긴다 (공개키/무관한 파일은 애초에 안 보이게).
     async loadKeepassAttachments (): Promise<void> {
         this.keepassAttachmentsError = '';
         this.keepassAttachments = [];
@@ -266,41 +240,22 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
                 this.keepassAttachmentsError = this.t('No matching KeePass entry found.');
                 return;
             }
-            this.keepassAttachments = entry.binaries ? [...entry.binaries.keys()] : [];
-            if (!this.keepassAttachments.length) {
+            const names: string[] = entry.binaries ? [...entry.binaries.keys()] : [];
+            if (!names.length) {
                 this.keepassAttachmentsError = this.t('The KeePass entry has no attachments.');
+                return;
+            }
+            this.keepassAttachments = names.filter(name => {
+                const binary = entry.binaries.get(name);
+                return classifyKeePassPrivateKey(getKeePassBinaryBuffer(binary)).ok;
+            });
+            if (!this.keepassAttachments.length) {
+                this.keepassAttachmentsError = this.t('No private key attachment found on this entry.');
             }
         } catch (e: any) {
             this.keepassAttachmentsError = e?.message || String(e);
         } finally {
             this.loadingKeepassAttachments = false;
-        }
-    }
-
-    // 첨부파일 목록은 이름만 보여주고(내용을 다 열어보지 않음), 실제로 고른 것 "하나만"
-    // ssh2의 진짜 키 파서로 열어서 개인키가 맞는지 검증한다. 선택할 때마다 즉시 피드백을 주기 위함.
-    async validateKeepassPrivateKeyAttachment (): Promise<void> {
-        this.keepassAttachmentValidation = null;
-        const name = this.profile.options.keepassPrivateKeyAttachment;
-        if (!name || !this.profile.options.instanceId) {
-            return;
-        }
-        this.validatingKeepassAttachment = true;
-        try {
-            const keepassService = resolveKeePassService(this.injector);
-            if (!keepassService) {
-                return;
-            }
-            const entry = await keepassService['findEntry'](this.profile.options.instanceId, 22);
-            const binary = entry?.binaries?.get(name);
-            if (!binary) {
-                return;
-            }
-            this.keepassAttachmentValidation = classifyKeePassPrivateKey(getKeePassBinaryBuffer(binary));
-        } catch (e: any) {
-            this.keepassAttachmentValidation = { ok: false, encrypted: false, message: e?.message || String(e) };
-        } finally {
-            this.validatingKeepassAttachment = false;
         }
     }
 

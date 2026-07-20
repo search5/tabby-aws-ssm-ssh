@@ -21,7 +21,5 @@
     "KeePass plugin is not installed or enabled.": "KeePass plugin is not installed or enabled.",
     "No matching KeePass entry found.": "No matching KeePass entry found.",
     "The KeePass entry has no attachments.": "The KeePass entry has no attachments.",
-    "Valid private key.": "Valid private key.",
-    "This file is not a valid private key.": "This file is not a valid private key.",
-    "This key is passphrase-protected, which is not supported.": "This key is passphrase-protected, which is not supported."
+    "No private key attachment found on this entry.": "No private key attachment found on this entry."
 }

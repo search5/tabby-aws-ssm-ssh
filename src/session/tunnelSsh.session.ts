@@ -104,30 +104,29 @@ export class TunnelSshSession extends BaseSession {
                 privateKey = (await vaultStorage.loadSshPrivateKey(this.profile)) ?? privateKey;
             }
 
-            // KeePass 통합 자격증명 조회 (AWS 또는 SSH 인증 중 하나라도 keypass 인 경우 수행)
-            // AWS 쪽은 keepassSearchTerm(기본값 instanceId)으로 엔트리를 찾고, SSH 개인키는 항상
-            // instanceId로 찾은 엔트리의 첨부파일에서 가져온다 — 서로 다른 엔트리일 수 있으므로 별도로 조회.
+            // KeePass 통합 자격증명 조회 (AWS 또는 SSH 인증 중 하나라도 keypass 인 경우 수행).
+            // AWS 자격증명과 SSH 개인키 모두 instanceId로 찾은 같은 엔트리에서 가져온다
+            // (KeePassService가 host:port로 내부 캐싱하므로 두 번 호출해도 두 번째부터는 즉시 반환됨).
             if (awsAuthMethod === 'keypass' || sshAuthMethod === 'keypass') {
                 try {
+                    if (!opts.instanceId) {
+                        throw new Error('Instance ID is required to find the KeePass entry');
+                    }
+
                     const keepassService = resolveKeePassService(this.injector);
                     if (!keepassService) {
                         throw new Error('KeePass SSH plugin is not installed or enabled in Tabby');
                     }
 
+                    emit('Searching KeePass entry...');
+                    const entry = await keepassService['findEntry'](opts.instanceId, 22);
+                    if (!entry) {
+                        throw new Error(`No KeePass entry found matching URL "ssh://${opts.instanceId}"`);
+                    }
+
                     if (awsAuthMethod === 'keypass') {
-                        emit('Searching KeePass entry for AWS credentials...');
-                        const searchTerm = opts.keepassSearchTerm || opts.instanceId;
-                        if (!searchTerm) {
-                            throw new Error('Instance ID or KeePass Search Term is required to search entry');
-                        }
-
-                        const awsEntry = await keepassService['findEntry'](searchTerm, 22);
-                        if (!awsEntry) {
-                            throw new Error(`No KeePass entry found matching URL "ssh://${searchTerm}"`);
-                        }
-
                         const getField = (fieldName: string): string | undefined => {
-                            const f = awsEntry.fields.get(fieldName);
+                            const f = entry.fields.get(fieldName);
                             if (!f) return undefined;
                             return typeof f.getText === 'function' ? f.getText() : String(f);
                         };
@@ -145,20 +144,11 @@ export class TunnelSshSession extends BaseSession {
                     }
 
                     if (sshAuthMethod === 'keypass') {
-                        emit('Searching KeePass entry for SSH private key...');
-                        if (!opts.instanceId) {
-                            throw new Error('Instance ID is required to find the KeePass entry');
-                        }
                         if (!opts.keepassPrivateKeyAttachment) {
                             throw new Error('No KeePass attachment selected for the private key. Open profile settings and select one.');
                         }
 
-                        const sshEntry = await keepassService['findEntry'](opts.instanceId, 22);
-                        if (!sshEntry) {
-                            throw new Error(`No KeePass entry found matching URL "ssh://${opts.instanceId}"`);
-                        }
-
-                        const binary = sshEntry.binaries?.get(opts.keepassPrivateKeyAttachment);
+                        const binary = entry.binaries?.get(opts.keepassPrivateKeyAttachment);
                         if (!binary) {
                             throw new Error(`KeePass entry attachment "${opts.keepassPrivateKeyAttachment}" not found`);
                         }
