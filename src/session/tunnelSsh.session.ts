@@ -34,10 +34,32 @@ export function resolveKeePassService (injector: Injector): any {
     return null;
 }
 
-// KeePass 엔트리 첨부파일(kdbxweb ProtectedBinary 또는 원시 바이너리)을 UTF-8 텍스트로 읽는다.
-export function readKeePassBinaryAsText (binary: any): string {
-    const buf = typeof binary?.getBinary === 'function' ? binary.getBinary() : binary;
-    return Buffer.from(buf).toString('utf8');
+// KeePass 엔트리 첨부파일(kdbxweb ProtectedBinary 또는 원시 바이너리)을 원본 Buffer로 읽는다.
+export function getKeePassBinaryBuffer (binary: any): Buffer {
+    const raw = typeof binary?.getBinary === 'function' ? binary.getBinary() : binary;
+    return Buffer.from(raw);
+}
+
+export interface KeePassKeyClassification {
+    ok: boolean;
+    encrypted: boolean;
+    message?: string;
+}
+
+// ssh2가 이미 갖고 있는 실제 키 파서(OpenSSH/PEM/PPK)로 내용을 해석해서, 진짜 개인키가 맞는지 판별한다.
+// 파일명이나 "-----BEGIN"으로 시작하는지 같은 텍스트 패턴 매칭이 아니라 실제 파싱을 시도한다.
+// passphrase로 암호화된 키는 이 플러그인이 아직 지원하지 않으므로 별도 사유로 구분해서 알려준다.
+export function classifyKeePassPrivateKey (content: Buffer | string): KeePassKeyClassification {
+    const { utils } = require('ssh2');
+    const result = utils.parseKey(content);
+    if (result instanceof Error) {
+        const encrypted = /encrypted/i.test(result.message) && /passphrase/i.test(result.message);
+        return { ok: false, encrypted, message: result.message };
+    }
+    if (typeof result.isPrivateKey === 'function' && !result.isPrivateKey()) {
+        return { ok: false, encrypted: false, message: 'This file is a public key, not a private key.' };
+    }
+    return { ok: true, encrypted: false };
 }
 
 export class TunnelSshSession extends BaseSession {
@@ -141,7 +163,15 @@ export class TunnelSshSession extends BaseSession {
                             throw new Error(`KeePass entry attachment "${opts.keepassPrivateKeyAttachment}" not found`);
                         }
 
-                        privateKey = readKeePassBinaryAsText(binary);
+                        const keyBuffer = getKeePassBinaryBuffer(binary);
+                        const classification = classifyKeePassPrivateKey(keyBuffer);
+                        if (!classification.ok) {
+                            throw new Error(classification.encrypted
+                                ? `KeePass attachment "${opts.keepassPrivateKeyAttachment}" is passphrase-protected, which is not supported.`
+                                : `KeePass attachment "${opts.keepassPrivateKeyAttachment}" is not a valid private key: ${classification.message}`);
+                        }
+
+                        privateKey = keyBuffer.toString('utf8');
                         emit(`Loaded SSH Private Key from KeePass attachment "${opts.keepassPrivateKeyAttachment}".`);
                     }
                 } catch (keepassError: any) {
