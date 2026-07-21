@@ -2,7 +2,7 @@
   "name": "tabby-aws-ssm-ssh",
   "version": "1.0.0",
   "description": "AWS SSM SSH plugin for Tabby",
-  "author": "Antigravity <antigravity@google.com>",
+  "author": "Ji-Ho, Lee <search5@gmail.com>",
   "license": "MIT",
   "keywords": [
     "tabby-plugin"
