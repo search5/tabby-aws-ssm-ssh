@@ -8,6 +8,11 @@
     "tabby-plugin"
   ],
   "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "scripts/install-plugin.js",
+    "README.md"
+  ],
   "scripts": {
     "prebuild": "node scripts/resolve-tabby-paths.js",
     "build": "webpack --progress --color",
