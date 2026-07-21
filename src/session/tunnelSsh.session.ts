@@ -34,10 +34,18 @@ export function resolveKeePassService (injector: Injector): any {
     return null;
 }
 
-// KeePass 엔트리 첨부파일(kdbxweb ProtectedBinary 또는 원시 바이너리)을 원본 Buffer로 읽는다.
+// KeePass 엔트리 첨부파일을 원본 Buffer로 읽는다. kdbxweb은 KDBX4 첨부파일을
+// { hash, value: ProtectedValue } 형태(KdbxBinaryWithHash)로 한 번 더 감싸서 주므로,
+// 먼저 value를 벗겨낸 뒤에야 ProtectedValue/원시 바이너리 판별이 의미가 있다.
 export function getKeePassBinaryBuffer (binary: any): Buffer {
-    const raw = typeof binary?.getBinary === 'function' ? binary.getBinary() : binary;
-    return Buffer.from(raw);
+    const unwrapped = binary && typeof binary === 'object' && typeof binary.getBinary !== 'function' && 'value' in binary
+        ? binary.value
+        : binary;
+    const raw = typeof unwrapped?.getBinary === 'function' ? unwrapped.getBinary() : unwrapped;
+    if (!(raw instanceof ArrayBuffer) && !Buffer.isBuffer(raw) && typeof raw !== 'string' && !ArrayBuffer.isView(raw)) {
+        throw new Error('Unrecognized KeePass attachment format — cannot read binary content.');
+    }
+    return Buffer.from(raw as ArrayBuffer);
 }
 
 export interface KeePassKeyClassification {
@@ -66,6 +74,7 @@ export class TunnelSshSession extends BaseSession {
     private sshClient: SSHClient | null = null;
     private shellChannel: ClientChannel | null = null;
     private tunnelStream: Duplex | null = null;
+    private connectionMode: 'ssm' | 'ssh' = 'ssm';
     private cols = 80;
     private rows = 24;
 
@@ -83,25 +92,42 @@ export class TunnelSshSession extends BaseSession {
         emit('Starting AWS SSM SSH Session...');
 
         const opts = this.profile.options;
+        // 'ssm': SSH 없이 SSM 에이전트가 직접 여는 셸(IAM 권한만 있으면 됨, 인스턴스에 키 페어 불필요).
+        // 'ssh': AWS-StartSSHSession으로 22번 포트를 터널링해서 실제 sshd에 SSH로 접속(개인키 필요).
+        const connectionMode = opts.connectionMode || 'ssm';
+        this.connectionMode = connectionMode;
         const awsAuthMethod = opts.awsAuthMethod || 'profile';
-        const sshAuthMethod = opts.sshAuthMethod || 'static';
+        const sshAuthMethod = connectionMode === 'ssh' ? (opts.sshAuthMethod || 'static') : null;
 
         let awsAccessKeyId: string | undefined;
         let awsSecretAccessKey: string | undefined;
         let privateKey = opts.privateKey; // 예전 버전이 config에 평문으로 저장한 값에 대한 호환 fallback
 
         try {
-            // Vault에 저장된 자격증명 조회 (AWS Access Key/Secret 직접 입력, SSH 개인키 직접 입력)
+            // Vault에 저장된 자격증명 조회 (AWS Access Key/Secret 직접 입력, SSH 개인키 직접 입력).
+            // Vault 잠금 해제(패스프레이즈 입력)에서 실패/취소되면 tabby-core가 원인을 알아보기 어려운
+            // 저수준 예외(Buffer.from(undefined) 등)를 던지므로, 여기서 잡아 원인을 명확히 알려준다.
             const vaultStorage = this.injector.get(AwsSsmVaultStorageService);
             if (awsAuthMethod === 'static') {
                 awsAccessKeyId = opts.awsAccessKeyId;
-                awsSecretAccessKey = (await vaultStorage.loadAwsSecretAccessKey(this.profile)) ?? opts.awsSecretAccessKey;
+                try {
+                    awsSecretAccessKey = (await vaultStorage.loadAwsSecretAccessKey(this.profile)) ?? opts.awsSecretAccessKey;
+                } catch (vaultError: any) {
+                    throw new Error(`Failed to unlock Vault for the AWS Secret Access Key: ${vaultError.message}`);
+                }
                 if (!awsSecretAccessKey) {
                     throw new Error('AWS Secret Access Key is not set. Open the profile settings and set it.');
                 }
             }
             if (sshAuthMethod === 'static') {
-                privateKey = (await vaultStorage.loadSshPrivateKey(this.profile)) ?? privateKey;
+                try {
+                    privateKey = (await vaultStorage.loadSshPrivateKey(this.profile)) ?? privateKey;
+                } catch (vaultError: any) {
+                    throw new Error(`Failed to unlock Vault for the SSH Private Key: ${vaultError.message}`);
+                }
+                if (!privateKey && !opts.privateKeyPath) {
+                    throw new Error('SSH Private Key is not set. Open the profile settings and set it (or choose KeePass / a private key path).');
+                }
             }
 
             // KeePass 통합 자격증명 조회 (AWS 또는 SSH 인증 중 하나라도 keypass 인 경우 수행).
@@ -173,55 +199,73 @@ export class TunnelSshSession extends BaseSession {
 
             // 1. 웹소켓 터널 수립
             emit('Connecting to AWS SSM Tunnel...');
-            this.tunnelStream = await this.createAwsSsmTunnel(awsAccessKeyId, awsSecretAccessKey);
+            this.tunnelStream = await this.createAwsSsmTunnel(connectionMode, awsAccessKeyId, awsSecretAccessKey);
 
-            // 2. SSH Client 연결 수립
-            emit('Establishing SSH Connection...');
-            this.sshClient = new SSHClient();
+            if (connectionMode === 'ssm') {
+                // SSH 없이 SSM 에이전트가 직접 여는 셸을 그대로 터미널에 연결한다. sshd/키 페어가
+                // 인스턴스에 전혀 없어도 IAM 권한만 있으면 접속되는 게 이 모드의 핵심.
+                const tunnel = this.tunnelStream as AwsSsmTunnelStream;
+                this.open = true;
+                emit('Connection Established.');
 
-            const sshConfig: any = {
-                sock: this.tunnelStream,
-                username: opts.username,
-                tryKeyboard: false,
-            };
-
-            // 개인키 자격증명 구성 (KeePass 추출 데이터 우선)
-            if (privateKey) {
-                sshConfig.privateKey = privateKey;
-            } else if (opts.privateKeyPath) {
-                const fs = require('fs');
-                sshConfig.privateKey = fs.readFileSync(opts.privateKeyPath, 'utf8');
-            }
-
-            await new Promise<void>((resolve, reject) => {
-                this.sshClient!.once('ready', resolve);
-                this.sshClient!.once('error', reject);
-                this.sshClient!.connect(sshConfig);
-            });
-
-            emit('Opening Shell Channel...');
-            const channel = await new Promise<ClientChannel>((resolve, reject) => {
-                this.sshClient!.shell({ term: 'xterm-256color', cols: this.cols, rows: this.rows }, (err, ch) => {
-                    if (err) reject(err);
-                    else resolve(ch);
+                tunnel.on('data', (data: Buffer) => {
+                    this.emitOutput(data);
                 });
-            });
 
-            this.shellChannel = channel;
-            this.open = true;
-            emit('Connection Established.');
+                tunnel.on('close', () => {
+                    this.destroy();
+                });
 
-            this.shellChannel.on('data', (data: Buffer) => {
-                this.emitOutput(data);
-            });
+                tunnel.sendSize(this.cols, this.rows);
+            } else {
+                // 2. SSH Client 연결 수립
+                emit('Establishing SSH Connection...');
+                this.sshClient = new SSHClient();
 
-            this.shellChannel.stderr.on('data', (data: Buffer) => {
-                this.emitOutput(data);
-            });
+                const sshConfig: any = {
+                    sock: this.tunnelStream,
+                    username: opts.username,
+                    tryKeyboard: false,
+                };
 
-            this.shellChannel.on('close', () => {
-                this.destroy();
-            });
+                // 개인키 자격증명 구성 (KeePass 추출 데이터 우선)
+                if (privateKey) {
+                    sshConfig.privateKey = privateKey;
+                } else if (opts.privateKeyPath) {
+                    const fs = require('fs');
+                    sshConfig.privateKey = fs.readFileSync(opts.privateKeyPath, 'utf8');
+                }
+
+                await new Promise<void>((resolve, reject) => {
+                    this.sshClient!.once('ready', resolve);
+                    this.sshClient!.once('error', reject);
+                    this.sshClient!.connect(sshConfig);
+                });
+
+                emit('Opening Shell Channel...');
+                const channel = await new Promise<ClientChannel>((resolve, reject) => {
+                    this.sshClient!.shell({ term: 'xterm-256color', cols: this.cols, rows: this.rows }, (err, ch) => {
+                        if (err) reject(err);
+                        else resolve(ch);
+                    });
+                });
+
+                this.shellChannel = channel;
+                this.open = true;
+                emit('Connection Established.');
+
+                this.shellChannel.on('data', (data: Buffer) => {
+                    this.emitOutput(data);
+                });
+
+                this.shellChannel.stderr.on('data', (data: Buffer) => {
+                    this.emitOutput(data);
+                });
+
+                this.shellChannel.on('close', () => {
+                    this.destroy();
+                });
+            }
 
         } catch (err: any) {
             emit(`Error: ${err.message}`);
@@ -231,7 +275,7 @@ export class TunnelSshSession extends BaseSession {
         }
     }
 
-    private async createAwsSsmTunnel(awsAccessKeyId?: string, awsSecretAccessKey?: string): Promise<Duplex> {
+    private async createAwsSsmTunnel(connectionMode: 'ssm' | 'ssh', awsAccessKeyId?: string, awsSecretAccessKey?: string): Promise<Duplex> {
         const opts = this.profile.options;
         const awsAuthMethod = opts.awsAuthMethod || 'profile';
         let credentials: any;
@@ -252,13 +296,20 @@ export class TunnelSshSession extends BaseSession {
             credentials,
         });
 
-        const command = new StartSessionCommand({
-            Target: opts.instanceId,
-            DocumentName: 'AWS-StartSSHSession',
-            Parameters: {
-                portNumber: ['22'],
-            },
-        });
+        // 'ssh' 모드는 22번 포트를 SSH로 터널링하는 AWS-StartSSHSession 문서를 명시해야 하고,
+        // 'ssm' 모드는 DocumentName을 아예 안 주면 SSM 에이전트가 기본 대화형 셸 세션을 연다
+        // (인스턴스에 sshd/키 페어가 없어도 IAM 권한만으로 접속됨).
+        const command = connectionMode === 'ssh'
+            ? new StartSessionCommand({
+                Target: opts.instanceId,
+                DocumentName: 'AWS-StartSSHSession',
+                Parameters: {
+                    portNumber: ['22'],
+                },
+            })
+            : new StartSessionCommand({
+                Target: opts.instanceId,
+            });
 
         const ssmSession = await ssmClient.send(command);
 
@@ -277,17 +328,29 @@ export class TunnelSshSession extends BaseSession {
 
     // BaseSession 구현 필수 메소드
     write(data: Buffer): void {
-        this.shellChannel?.write(data);
+        if (this.connectionMode === 'ssm') {
+            this.tunnelStream?.write(data);
+        } else {
+            this.shellChannel?.write(data);
+        }
     }
 
     resize(columns: number, rows: number): void {
         this.cols = columns;
         this.rows = rows;
-        this.shellChannel?.setWindow(rows, columns, 0, 0);
+        if (this.connectionMode === 'ssm') {
+            (this.tunnelStream as AwsSsmTunnelStream)?.sendSize(columns, rows);
+        } else {
+            this.shellChannel?.setWindow(rows, columns, 0, 0);
+        }
     }
 
     kill(signal?: string): void {
-        this.shellChannel?.end();
+        if (this.connectionMode === 'ssm') {
+            this.tunnelStream?.end();
+        } else {
+            this.shellChannel?.end();
+        }
     }
 
     async getWorkingDirectory(): Promise<string | null> {

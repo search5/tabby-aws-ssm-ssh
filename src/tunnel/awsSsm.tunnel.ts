@@ -17,10 +17,40 @@ interface AgentMessage {
     payload: Buffer;
 }
 
+// AWS session-manager-plugin(message.PayloadType)과 동일한 값.
+// https://github.com/aws/session-manager-plugin/blob/main/src/message/clientmessage.go
+const PAYLOAD_TYPE = {
+    Output: 1,
+    Error: 2,
+    Size: 3,
+    Parameter: 4,
+    HandshakeRequest: 5,
+    HandshakeResponse: 6,
+    HandshakeComplete: 7,
+    EncChallengeRequest: 8,
+    EncChallengeResponse: 9,
+    Flag: 10,
+    StdErr: 11,
+    ExitCode: 12,
+} as const;
+
 export class AwsSsmTunnelStream extends Duplex {
     private ws: WebSocket | null = null;
     private sequenceNumber = BigInt(0);
     private isClosed = false;
+    // 하나의 WebSocket 프레임에 AgentMessage가 여러 개 이어붙어 오거나, 하나의 메시지가 여러 프레임에
+    // 걸쳐 쪼개져 올 수 있다. 프레임 = 메시지로 가정하고 payloadLength 뒷부분을 버리면 SSH 바이트
+    // 스트림 중간이 잘려나가 이후 패킷 복호화가 BAD_DECRYPT로 깨진다. 그래서 길이 기반으로 직접 프레이밍한다.
+    private recvBuffer: Buffer = Buffer.alloc(0);
+
+    // AWS-StartSSHSession 등은 에이전트가 대상 포트(예: 22)로 실제 연결을 맺기 전까지 클라이언트가
+    // 보낸 input_stream_data를 그냥 버린다 — WebSocket이 열리자마자 SSH 배너/KEXINIT을 써버리면
+    // 그 바이트가 통째로 유실되고 이후 sshd는 "invalid identification string"/ssh2는 "Bad packet
+    // length"를 던진다(직접 raw 캡처로 재현 확인). HandshakeComplete를 받기 전까지는 실제 쓰기를
+    // 큐에 모아뒀다가, 준비 신호(HandshakeComplete 또는 handshake 없이 바로 오는 실제 Output)를
+    // 받은 뒤에 순서대로 흘려보낸다.
+    private handshakeReady = false;
+    private pendingActions: Array<() => void> = [];
 
     constructor(private options: AwsSsmTunnelOptions) {
         super();
@@ -48,15 +78,46 @@ export class AwsSsmTunnelStream extends Duplex {
 
             this.ws.on('message', (data: ArrayBuffer) => {
                 try {
-                    const message = this.decodeMessage(Buffer.from(data));
+                    this.recvBuffer = Buffer.concat([this.recvBuffer, Buffer.from(data)]);
 
-                    // MessageType이 output_stream_data 인 경우 처리
-                    if (message.messageType.trim() === 'output_stream_data') {
-                        // SSH 클라이언트로 바이너리 전송
-                        this.push(message.payload);
+                    // recvBuffer에 완성된 AgentMessage가 있는 만큼 계속 꺼내 처리한다.
+                    // (고정 헤더 120바이트 + payloadLength 만큼이 한 메시지)
+                    while (this.recvBuffer.length >= 120) {
+                        const payloadLength = this.recvBuffer.readUInt32BE(116);
+                        const totalLength = 120 + payloadLength;
+                        if (this.recvBuffer.length < totalLength) break; // 메시지가 아직 다 안 옴
 
-                        // ACK 전송
-                        this.sendAck(message);
+                        const message = this.decodeMessage(this.recvBuffer.subarray(0, totalLength));
+                        this.recvBuffer = this.recvBuffer.subarray(totalLength);
+
+                        // MessageType이 output_stream_data 인 경우 처리
+                        if (message.messageType.trim() === 'output_stream_data') {
+                            // ACK은 PayloadType에 상관없이 항상 먼저 보낸다 (AWS 세션 매니저 프로토콜 규약).
+                            this.sendAck(message);
+
+                            if (message.payloadType === PAYLOAD_TYPE.HandshakeRequest) {
+                                // AWS-StartSSHSession/PortForwarding 문서는 실제 포트로 연결을 열기 전에
+                                // 이 handshake 교환을 요구한다. 응답하지 않으면 에이전트가 대상 포트(22)에
+                                // 연결하지 않고 그대로 채널을 닫아버려서, ssh2가 "Connection lost before
+                                // handshake"를 던지는 것으로 관측된다.
+                                this.handleHandshakeRequest(message.payload);
+                            } else if (message.payloadType === PAYLOAD_TYPE.Output || message.payloadType === PAYLOAD_TYPE.StdErr) {
+                                // handshake 요청을 아예 안 보내는 세션(순수 SSM 셸)도 있다 — 그런 경우
+                                // 실제 Output이 왔다는 것 자체가 "handshake 불필요, 써도 됨"이라는 신호다.
+                                if (!this.handshakeReady) {
+                                    this.handshakeReady = true;
+                                    this.flushPendingWrites();
+                                }
+                                // 실제 터미널/포트 바이트만 SSH 클라이언트(또는 터미널)로 전달한다.
+                                this.push(message.payload);
+                            } else if (message.payloadType === PAYLOAD_TYPE.HandshakeComplete) {
+                                // 이제부터 에이전트가 대상 포트로 실제 전달을 시작한다는 공식 신호.
+                                // 그 전에 보낸 바이트는 조용히 버려진다(직접 확인함).
+                                this.handshakeReady = true;
+                                this.flushPendingWrites();
+                            }
+                            // Error/Flag/ExitCode 등은 ACK만 하고 별도 처리는 하지 않는다.
+                        }
                     }
                 } catch (err) {
                     this.destroy(err as Error);
@@ -144,6 +205,33 @@ export class AwsSsmTunnelStream extends Duplex {
         return buf;
     }
 
+    // 순수 SSM 세션(SSH 없이 SSM 에이전트가 직접 여는 셸)에서 터미널 리사이즈를 알리는 데 쓴다.
+    // SSH 터널 모드에서는 ssh2 ClientChannel.setWindow()를 쓰므로 이건 필요 없다.
+    sendSize(cols: number, rows: number) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        if (!this.handshakeReady) {
+            this.pendingActions.push(() => this.sendSizeNow(cols, rows));
+            return;
+        }
+
+        this.sendSizeNow(cols, rows);
+    }
+
+    private sendSizeNow(cols: number, rows: number) {
+        const payloadBuffer = Buffer.from(JSON.stringify({ cols, rows }));
+
+        const message = this.encodeMessage({
+            messageType: 'input_stream_data',
+            sequenceNumber: Number(this.sequenceNumber++),
+            flags: 0,
+            payloadType: 3, // Size
+            payload: payloadBuffer,
+        });
+
+        this.ws!.send(message);
+    }
+
     private sendAck(receivedMessage: AgentMessage) {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
@@ -165,6 +253,43 @@ export class AwsSsmTunnelStream extends Duplex {
         });
 
         this.ws.send(ackMessageBuffer);
+    }
+
+    // 에이전트가 요청한 모든 액션(SessionType 등)을 그냥 성공으로 응답한다 — 어차피 우리는
+    // 단순 바이트 파이프 역할만 하고 세션 타입/암호화 종류에 따라 동작을 분기하지 않는다.
+    private handleHandshakeRequest(payload: Buffer) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        let requestedActions: Array<{ ActionType: string }> = [];
+        try {
+            const request = JSON.parse(payload.toString('utf8'));
+            requestedActions = request.RequestedClientActions ?? [];
+        } catch {
+            // 파싱 실패해도 빈 액션 목록으로 응답을 보내 handshake 자체는 이어가게 한다.
+        }
+
+        const handshakeResponse = {
+            ClientVersion: '1.2.694.0',
+            ProcessedClientActions: requestedActions.map(action => ({
+                ActionType: action.ActionType,
+                ActionStatus: 1, // ActionStatus.Success
+                ActionResult: {},
+                Error: '',
+            })),
+            Errors: [] as string[],
+        };
+
+        const payloadBuffer = Buffer.from(JSON.stringify(handshakeResponse));
+
+        const message = this.encodeMessage({
+            messageType: 'input_stream_data',
+            sequenceNumber: Number(this.sequenceNumber++),
+            flags: 0,
+            payloadType: PAYLOAD_TYPE.HandshakeResponse,
+            payload: payloadBuffer,
+        });
+
+        this.ws.send(message);
     }
 
     private parseUuid(buf: Buffer): string {
@@ -196,6 +321,17 @@ export class AwsSsmTunnelStream extends Duplex {
             return callback(new Error('WebSocket is not open'));
         }
 
+        if (!this.handshakeReady) {
+            // 아직 에이전트가 대상에 연결되지 않았을 수 있다. 지금 보내면 조용히 유실되니
+            // HandshakeComplete(또는 handshake 없는 세션의 첫 Output)까지 순서대로 쌓아둔다.
+            this.pendingActions.push(() => this.sendInputData(chunk, callback));
+            return;
+        }
+
+        this.sendInputData(chunk, callback);
+    }
+
+    private sendInputData(chunk: Buffer, callback: (error?: Error | null) => void) {
         try {
             const encoded = this.encodeMessage({
                 messageType: 'input_stream_data',
@@ -205,10 +341,18 @@ export class AwsSsmTunnelStream extends Duplex {
                 payload: chunk,
             });
 
-            this.ws.send(encoded);
+            this.ws!.send(encoded);
             callback();
         } catch (err) {
             callback(err as Error);
+        }
+    }
+
+    private flushPendingWrites() {
+        const queued = this.pendingActions;
+        this.pendingActions = [];
+        for (const action of queued) {
+            action();
         }
     }
 

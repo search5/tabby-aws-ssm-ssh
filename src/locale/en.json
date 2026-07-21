@@ -1,4 +1,9 @@
 {
+    "Connection Type": "Connection Type",
+    "AWS SSM Session (no SSH key needed)": "AWS SSM Session (no SSH key needed)",
+    "SSH over SSM (requires key pair)": "SSH over SSM (requires key pair)",
+    "Opens a shell via the SSM agent using IAM permissions only. No SSH key pair required on the instance.": "Opens a shell via the SSM agent using IAM permissions only. No SSH key pair required on the instance.",
+    "Tunnels port 22 through SSM and authenticates with a real SSH key pair, like a normal SSH connection.": "Tunnels port 22 through SSM and authenticates with a real SSH key pair, like a normal SSH connection.",
     "AWS Connection Auth": "AWS Connection Auth",
     "Select an authentication method": "Select an authentication method",
     "Use AWS Profile": "Use AWS Profile",

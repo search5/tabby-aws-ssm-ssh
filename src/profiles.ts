@@ -9,7 +9,11 @@ export interface AwsSsmSshProfile extends ConnectableTerminalProfile {
         username: string;
         region: string;
         instanceId: string;
-        
+
+        // 'ssm': SSH 없이 SSM 에이전트가 직접 여는 셸(IAM 권한만 있으면 됨, 인스턴스에 키 페어 불필요).
+        // 'ssh': AWS-StartSSHSession으로 22번 포트를 터널링해서 실제 sshd에 SSH로 접속(개인키 필요).
+        connectionMode?: 'ssm' | 'ssh';
+
         // AWS SSM 터널링 (로컬 프로필, 직접 입력 또는 KeePass 이용)
         awsAuthMethod?: 'profile' | 'static' | 'keypass';
         awsProfile?: string;
@@ -36,8 +40,13 @@ export class AwsSsmSshProfileProvider extends ProfileProvider<AwsSsmSshProfile> 
             username: 'ec2-user',
             region: 'us-east-1',
             instanceId: '',
+            connectionMode: 'ssm',
+            awsAuthMethod: undefined,
             awsProfile: 'default',
+            awsAccessKeyId: undefined,
             sshAuthMethod: 'static',
+            privateKeyPath: undefined,
+            keepassPrivateKeyAttachment: undefined,
         },
     };
 
@@ -52,6 +61,7 @@ export class AwsSsmSshProfileProvider extends ProfileProvider<AwsSsmSshProfile> 
                     username: 'ec2-user',
                     region: 'us-east-1',
                     instanceId: '',
+                    connectionMode: 'ssm',
                     awsProfile: 'default',
                     sshAuthMethod: 'static',
                 },

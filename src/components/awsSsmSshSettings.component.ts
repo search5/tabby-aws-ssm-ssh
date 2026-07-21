@@ -18,13 +18,6 @@ const locales: Record<string, Record<string, string>> = {
     selector: 'aws-ssm-ssh-profile-settings',
     template: `
         <div class="form-group row mb-3">
-            <label class="col-sm-3 col-form-label">Username</label>
-            <div class="col-sm-9">
-                <input type="text" class="form-control" [(ngModel)]="profile.options.username" placeholder="e.g. ec2-user" />
-            </div>
-        </div>
-
-        <div class="form-group row mb-3">
             <label class="col-sm-3 col-form-label">AWS Region</label>
             <div class="col-sm-9">
                 <input type="text" class="form-control" [(ngModel)]="profile.options.region" placeholder="e.g. us-east-1" />
@@ -38,13 +31,33 @@ const locales: Record<string, Record<string, string>> = {
             </div>
         </div>
 
+        <div class="form-group row mb-3">
+            <label class="col-sm-3 col-form-label">{{ t('Connection Type') }}</label>
+            <div class="col-sm-9">
+                <select class="form-control" [(ngModel)]="profile.options.connectionMode">
+                    <option value="ssm">{{ t('AWS SSM Session (no SSH key needed)') }}</option>
+                    <option value="ssh">{{ t('SSH over SSM (requires key pair)') }}</option>
+                </select>
+                <div class="text-muted small mt-1">
+                    {{ profile.options.connectionMode !== 'ssh' ? t('Opens a shell via the SSM agent using IAM permissions only. No SSH key pair required on the instance.') : t('Tunnels port 22 through SSM and authenticates with a real SSH key pair, like a normal SSH connection.') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row mb-3" *ngIf="profile.options.connectionMode === 'ssh'">
+            <label class="col-sm-3 col-form-label">Username</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" [(ngModel)]="profile.options.username" placeholder="e.g. ec2-user" />
+            </div>
+        </div>
+
         <hr />
         <h5 class="mb-3">AWS Connection Configuration</h5>
 
         <div class="form-group row mb-3">
             <label class="col-sm-3 col-form-label">{{ t('AWS Connection Auth') }}</label>
             <div class="col-sm-9">
-                <select class="form-control" [(ngModel)]="awsAuthMethod">
+                <select class="form-control" [(ngModel)]="awsAuthMethod" (change)="onAwsAuthMethodChange()">
                     <option [ngValue]="null">{{ t('Select an authentication method') }}</option>
                     <option [ngValue]="'profile'">{{ t('Use AWS Profile') }}</option>
                     <option [ngValue]="'static'">{{ t('Static Access Key / Secret') }}</option>
@@ -89,64 +102,66 @@ const locales: Record<string, Record<string, string>> = {
             </div>
         </div>
 
-        <hr />
-        <h5 class="mb-3">SSH Login Configuration</h5>
+        <ng-container *ngIf="profile.options.connectionMode === 'ssh'">
+            <hr />
+            <h5 class="mb-3">SSH Login Configuration</h5>
 
-        <div class="form-group row mb-3">
-            <label class="col-sm-3 col-form-label">SSH Auth Method</label>
-            <div class="col-sm-9">
-                <select class="form-control" [(ngModel)]="profile.options.sshAuthMethod" (change)="onSshAuthMethodChange()">
-                    <option value="static">Manual Input / Private Key Path</option>
-                    <option value="keypass">Retrieve from KeePass</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- SSH Static Credentials -->
-        <div *ngIf="profile.options.sshAuthMethod === 'static'">
             <div class="form-group row mb-3">
-                <label class="col-sm-3 col-form-label">Private Key Path</label>
+                <label class="col-sm-3 col-form-label">SSH Auth Method</label>
                 <div class="col-sm-9">
-                    <input type="text" class="form-control" [(ngModel)]="profile.options.privateKeyPath" placeholder="/path/to/id_rsa" />
+                    <select class="form-control" [(ngModel)]="profile.options.sshAuthMethod" (change)="onSshAuthMethodChange()">
+                        <option value="static">Manual Input / Private Key Path</option>
+                        <option value="keypass">Retrieve from KeePass</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="form-group row mb-3">
-                <label class="col-sm-3 col-form-label">{{ t('Private Key Content') }}</label>
-                <div class="col-sm-9">
-                    <div *ngIf="!vaultEnabled" class="text-muted small">{{ t('Enable Vault in Settings to store this securely.') }}</div>
-                    <ng-container *ngIf="vaultEnabled">
-                        <button type="button" class="btn btn-secondary btn-sm" [disabled]="!profile.options.instanceId" (click)="setSshPrivateKey()">
-                            {{ hasSshPrivateKey ? t('Change') : t('Set') }}
-                        </button>
-                        <button type="button" *ngIf="hasSshPrivateKey" class="btn btn-link btn-sm text-danger" (click)="clearSshPrivateKey()">{{ t('Clear') }}</button>
-                        <div class="text-muted small mt-1">
-                            {{ hasSshPrivateKey ? t('Stored in Vault.') : (profile.options.instanceId ? '' : t('Enter Instance ID first.')) }}
-                        </div>
-                    </ng-container>
-                </div>
-            </div>
-        </div>
-
-        <!-- SSH Private Key from KeePass attachment -->
-        <div *ngIf="profile.options.sshAuthMethod === 'keypass'">
-            <div class="form-group row mb-3">
-                <label class="col-sm-3 col-form-label">{{ t('KeePass Attachment') }}</label>
-                <div class="col-sm-9">
-                    <div class="d-flex" style="gap: 0.5rem;">
-                        <select class="form-control" [(ngModel)]="keepassPrivateKeyAttachment" [disabled]="!keepassAttachments.length">
-                            <option [ngValue]="null">{{ t('Select a KeePass attachment') }}</option>
-                            <option *ngFor="let a of keepassAttachments" [ngValue]="a">{{ a }}</option>
-                        </select>
-                        <button type="button" class="btn btn-secondary btn-sm" style="white-space: nowrap;" [disabled]="!profile.options.instanceId || loadingKeepassAttachments" (click)="loadKeepassAttachments()">
-                            {{ loadingKeepassAttachments ? t('Loading...') : t('Refresh') }}
-                        </button>
+            <!-- SSH Static Credentials -->
+            <div *ngIf="profile.options.sshAuthMethod === 'static'">
+                <div class="form-group row mb-3">
+                    <label class="col-sm-3 col-form-label">Private Key Path</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" [(ngModel)]="profile.options.privateKeyPath" placeholder="/path/to/id_rsa" />
                     </div>
-                    <div class="text-muted small mt-1" *ngIf="!profile.options.instanceId">{{ t('Enter Instance ID first.') }}</div>
-                    <div class="text-danger small mt-1" *ngIf="keepassAttachmentsError">{{ keepassAttachmentsError }}</div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-sm-3 col-form-label">{{ t('Private Key Content') }}</label>
+                    <div class="col-sm-9">
+                        <div *ngIf="!vaultEnabled" class="text-muted small">{{ t('Enable Vault in Settings to store this securely.') }}</div>
+                        <ng-container *ngIf="vaultEnabled">
+                            <button type="button" class="btn btn-secondary btn-sm" [disabled]="!profile.options.instanceId" (click)="setSshPrivateKey()">
+                                {{ hasSshPrivateKey ? t('Change') : t('Set') }}
+                            </button>
+                            <button type="button" *ngIf="hasSshPrivateKey" class="btn btn-link btn-sm text-danger" (click)="clearSshPrivateKey()">{{ t('Clear') }}</button>
+                            <div class="text-muted small mt-1">
+                                {{ hasSshPrivateKey ? t('Stored in Vault.') : (profile.options.instanceId ? '' : t('Enter Instance ID first.')) }}
+                            </div>
+                        </ng-container>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- SSH Private Key from KeePass attachment -->
+            <div *ngIf="profile.options.sshAuthMethod === 'keypass'">
+                <div class="form-group row mb-3">
+                    <label class="col-sm-3 col-form-label">{{ t('KeePass Attachment') }}</label>
+                    <div class="col-sm-9">
+                        <div class="d-flex" style="gap: 0.5rem;">
+                            <select class="form-control" [(ngModel)]="keepassPrivateKeyAttachment" [disabled]="!keepassAttachments.length">
+                                <option [ngValue]="null">{{ t('Select a KeePass attachment') }}</option>
+                                <option *ngFor="let a of keepassAttachments" [ngValue]="a">{{ a }}</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-sm" style="white-space: nowrap;" [disabled]="!profile.options.instanceId || loadingKeepassAttachments" (click)="loadKeepassAttachments()">
+                                {{ loadingKeepassAttachments ? t('Loading...') : t('Refresh') }}
+                            </button>
+                        </div>
+                        <div class="text-muted small mt-1" *ngIf="!profile.options.instanceId">{{ t('Enter Instance ID first.') }}</div>
+                        <div class="text-danger small mt-1" *ngIf="keepassAttachmentsError">{{ keepassAttachmentsError }}</div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
     `,
 })
 export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsSsmSshProfile> {
@@ -198,6 +213,7 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
         // 반드시 이미 존재하는 options 객체의 개별 속성만 채워야 한다.
         this.profile.options.username = this.profile.options.username || 'ec2-user';
         this.profile.options.region = this.profile.options.region || 'us-east-1';
+        this.profile.options.connectionMode = this.profile.options.connectionMode || 'ssm';
         this.profile.options.awsProfile = this.profile.options.awsProfile || 'default';
         this.profile.options.sshAuthMethod = this.profile.options.sshAuthMethod || 'static';
 
@@ -205,8 +221,15 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
 
         this.vaultEnabled = this.vaultStorage.isEnabled();
         if (this.vaultEnabled && this.profile.options.instanceId) {
-            this.hasAwsSecretAccessKey = await this.vaultStorage.hasAwsSecretAccessKey(this.profile);
-            this.hasSshPrivateKey = await this.vaultStorage.hasSshPrivateKey(this.profile);
+            // Vault 조회는 실제로 Vault를 잠금 해제해야 하므로, 이 프로필이 static(Vault 저장) 인증을
+            // 쓸 때만 호출한다. keypass/profile 인증인 프로필까지 설정 화면을 열 때마다 Vault 잠금
+            // 해제를 요구하면 안 된다.
+            if (this.profile.options.awsAuthMethod === 'static') {
+                this.hasAwsSecretAccessKey = await this.vaultStorage.hasAwsSecretAccessKey(this.profile);
+            }
+            if (this.profile.options.sshAuthMethod === 'static') {
+                this.hasSshPrivateKey = await this.vaultStorage.hasSshPrivateKey(this.profile);
+            }
         }
 
         if (this.profile.options.sshAuthMethod === 'keypass') {
@@ -214,9 +237,17 @@ export class AwsSsmSshSettingsComponent implements ProfileSettingsComponent<AwsS
         }
     }
 
-    onSshAuthMethodChange (): void {
+    async onAwsAuthMethodChange (): Promise<void> {
+        if (this.vaultEnabled && this.profile.options.instanceId && this.profile.options.awsAuthMethod === 'static') {
+            this.hasAwsSecretAccessKey = await this.vaultStorage.hasAwsSecretAccessKey(this.profile);
+        }
+    }
+
+    async onSshAuthMethodChange (): Promise<void> {
         if (this.profile.options.sshAuthMethod === 'keypass') {
             this.loadKeepassAttachments();
+        } else if (this.vaultEnabled && this.profile.options.instanceId && this.profile.options.sshAuthMethod === 'static') {
+            this.hasSshPrivateKey = await this.vaultStorage.hasSshPrivateKey(this.profile);
         }
     }
 

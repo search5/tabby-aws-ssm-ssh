@@ -1,4 +1,9 @@
 {
+    "Connection Type": "연결 방식",
+    "AWS SSM Session (no SSH key needed)": "AWS SSM 세션 (SSH 키 불필요)",
+    "SSH over SSM (requires key pair)": "SSM을 통한 SSH (키 페어 필요)",
+    "Opens a shell via the SSM agent using IAM permissions only. No SSH key pair required on the instance.": "SSM 에이전트가 IAM 권한만으로 여는 셸입니다. 인스턴스에 SSH 키 페어가 없어도 됩니다.",
+    "Tunnels port 22 through SSM and authenticates with a real SSH key pair, like a normal SSH connection.": "SSM으로 22번 포트를 터널링해서 실제 SSH 키 페어로 인증합니다. 일반 SSH 연결과 같습니다.",
     "AWS Connection Auth": "AWS 연결 인증",
     "Select an authentication method": "선택값으로 선택하세요",
     "Use AWS Profile": "AWS 프로필 사용",
