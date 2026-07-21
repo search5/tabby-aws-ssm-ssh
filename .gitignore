@@ -10,3 +10,5 @@ id_ed25519_test*
 build-test-kdbx.mjs
 docs/_build/
 docs/locale/**/*.mo
+SYMBOL_ANALYSIS.md
+tabby_plugin_prompt.md
