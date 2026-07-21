@@ -74,4 +74,4 @@ npm run install-plugin # copy dist/ into Tabby's plugin directory
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
