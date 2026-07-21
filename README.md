@@ -1,5 +1,7 @@
 # tabby-aws-ssm-ssh
 
+📖 **[Documentation](https://search5.github.io/tabby-aws-ssm-ssh/)** (English / 한국어)
+
 A [Tabby](https://tabby.sh) terminal plugin that connects to EC2 instances through **AWS Systems Manager (SSM) Session Manager** — no public IP, no open inbound ports, and optionally no SSH key pair at all.
 
 ## Features
