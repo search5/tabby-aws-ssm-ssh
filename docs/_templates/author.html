@@ -1,0 +1,15 @@
+{# Override sphinx-book-theme's components/author.html.
+   The theme's default renders "{{ translate('By') }} {{ author }}", and
+   Sphinx's bundled Korean catalog mistranslates "By" as the postposition
+   "으로" (which reads like "using/via <author>" rather than "written by").
+   We render the correct phrasing explicitly per language instead of relying
+   on that translation. #}
+{% if author %}
+<p class="component-author">
+{% if language == 'ko' %}
+작성자: {{ author }}
+{% else %}
+By {{ author }}
+{% endif %}
+</p>
+{% endif %}

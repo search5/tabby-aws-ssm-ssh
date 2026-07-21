@@ -1,0 +1,76 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, search5
+# This file is distributed under the same license as the tabby-aws-ssm-ssh
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tabby-aws-ssm-ssh 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 23:37+0900\n"
+"PO-Revision-Date: 2026-07-21 23:37+0900\n"
+"Last-Translator: search5\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../index.rst:21
+msgid "Contents:"
+msgstr "목차:"
+
+#: ../../index.rst:2
+msgid "tabby-aws-ssm-ssh documentation"
+msgstr "tabby-aws-ssm-ssh 문서"
+
+#: ../../index.rst:4
+msgid ""
+"A `Tabby <https://tabby.sh>`_ terminal plugin that connects to EC2 "
+"instances through **AWS Systems Manager (SSM) Session Manager** — no "
+"public IP, no open inbound ports, and optionally no SSH key pair at all."
+msgstr ""
+"`Tabby <https://tabby.sh>`_ 터미널용 플러그인으로, **AWS Systems Manager"
+" (SSM) 세션 관리자**\\ 를 통해 EC2 인스턴스에 접속합니다. 퍼블릭 IP도, "
+"인바운드 포트 개방도 필요 없으며, 원한다면 SSH 키 페어조차 없이 접속할 "
+"수 있습니다."
+
+#: ../../index.rst:8
+msgid "Two connection modes are supported:"
+msgstr "두 가지 접속 모드를 지원합니다:"
+
+#: ../../index.rst:10
+msgid ""
+"**AWS SSM Session** — opens a shell directly through the SSM Agent using "
+"only IAM permissions. No SSH key pair or ``sshd`` required on the "
+"instance."
+msgstr ""
+"**AWS SSM 세션** — IAM 권한만으로 SSM 에이전트를 통해 셸을 직접 엽니다. "
+"인스턴스에 SSH 키 페어나 ``sshd``\\ 가 필요하지 않습니다."
+
+#: ../../index.rst:12
+msgid ""
+"**SSH over SSM** — tunnels port 22 through SSM (``AWS-StartSSHSession``) "
+"and authenticates with a real SSH key pair, just like a normal SSH "
+"connection, but without the instance ever needing a public IP or an open "
+"security group inbound rule."
+msgstr ""
+"**SSM을 통한 SSH** — SSM(``AWS-StartSSHSession``)을 통해 22번 포트를 "
+"터널링하고, 일반 SSH 접속과 동일하게 실제 SSH 키 페어로 인증합니다. "
+"다만 인스턴스에 퍼블릭 IP나 개방된 보안 그룹 인바운드 규칙이 전혀 "
+"필요하지 않습니다."
+
+#: ../../index.rst:17
+msgid ""
+"AWS credentials can come from a named AWS CLI profile, a static access "
+"key/secret, or a `tabby-ssh-keepass <https://github.com/search5/tabby-"
+"ssh-keepass>`_ entry — see :doc:`prerequisites` and :doc:`usage` for the "
+"full picture."
+msgstr ""
+"AWS 자격 증명은 이름이 지정된 AWS CLI 프로파일, 고정된 액세스 키/시크릿, "
+"또는 `tabby-ssh-keepass <https://github.com/search5/tabby-ssh-keepass>`_ "
+"항목에서 가져올 수 있습니다. 전체적인 내용은 :doc:`prerequisites`\\ 와 "
+":doc:`usage`\\ 를 참고하세요."

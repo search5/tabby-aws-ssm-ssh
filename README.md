@@ -22,7 +22,11 @@ A [Tabby](https://tabby.sh) terminal plugin that connects to EC2 instances throu
 
 ## Installation
 
-This plugin isn't published to npm yet — install it from source:
+### Option A — Tabby Plugin Manager (recommended)
+
+Search for `aws-ssm-ssh` in **Tabby Settings → Plugins** and click Install. Restart Tabby when prompted.
+
+### Option B — From source
 
 ```bash
 git clone https://github.com/search5/tabby-aws-ssm-ssh.git
@@ -32,7 +36,15 @@ npm run build
 npm run install-plugin
 ```
 
-`npm run install-plugin` copies the built plugin into Tabby's plugin directory (`~/.config/tabby/plugins` on Linux, `~/Library/Application Support/tabby/plugins` on macOS, `%APPDATA%\tabby\plugins` on Windows). Restart Tabby afterwards to load it.
+`npm run install-plugin` copies the built plugin into Tabby's plugin directory:
+
+| OS | Plugin directory |
+|---|---|
+| Linux | `~/.config/tabby/plugins` |
+| macOS | `~/Library/Application Support/tabby/plugins` |
+| Windows | `%APPDATA%\tabby\plugins` |
+
+Restart Tabby afterwards to load it.
 
 ## Configuration
 

@@ -1,0 +1,142 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, search5
+# This file is distributed under the same license as the tabby-aws-ssm-ssh
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tabby-aws-ssm-ssh 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 23:52+0900\n"
+"PO-Revision-Date: 2026-07-21 23:37+0900\n"
+"Last-Translator: search5\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../installation.rst:2
+msgid "Installation"
+msgstr "설치"
+
+#: ../../installation.rst:4
+msgid "There are two ways to install **tabby-aws-ssm-ssh**."
+msgstr "**tabby-aws-ssm-ssh**\\ 를 설치하는 방법은 두 가지입니다."
+
+#: ../../installation.rst:7
+msgid "Method 1 — Install from the Tabby Plugin Manager"
+msgstr "방법 1 — Tabby 플러그인 매니저에서 설치"
+
+#: ../../installation.rst:9
+msgid "This is the recommended method for most users."
+msgstr "대부분의 사용자에게 권장되는 방법입니다."
+
+#: ../../installation.rst:11
+msgid "Open Tabby and go to **Settings → Plugins**."
+msgstr "Tabby를 열고 **설정(Settings) → 플러그인(Plugins)**\\ 으로 이동합니다."
+
+#: ../../installation.rst:12
+msgid "In the search box, search for ``aws-ssm-ssh``."
+msgstr "검색창에 ``aws-ssm-ssh``\\ 를 검색합니다."
+
+#: ../../installation.rst:13
+msgid "Click **Install**, then restart Tabby when prompted."
+msgstr "**Install**\\ 을 클릭한 뒤, 안내가 나오면 Tabby를 재시작합니다."
+
+#: ../../installation.rst:16
+msgid "Method 2 — Clone the Git repository and build from source"
+msgstr "방법 2 — Git 저장소 복제하여 직접 설치"
+
+#: ../../installation.rst:18
+msgid "Clone the repository and move into it:"
+msgstr "저장소를 복제하고 해당 디렉터리로 이동합니다:"
+
+#: ../../installation.rst:25
+msgid "Install the npm dependencies:"
+msgstr "npm 의존성을 설치합니다:"
+
+#: ../../installation.rst:31
+msgid "Build the plugin:"
+msgstr "플러그인을 빌드합니다:"
+
+#: ../../installation.rst:37
+msgid "Copy the built plugin into Tabby's plugin directory:"
+msgstr "빌드된 플러그인을 Tabby의 플러그인 디렉터리로 복사합니다:"
+
+#: ../../installation.rst:43
+msgid ""
+"``npm run install-plugin`` copies the ``dist/`` output into Tabby's "
+"plugin directory:"
+msgstr "``npm run install-plugin``\\ 은 ``dist/`` 결과물을 Tabby의 플러그인 디렉터리로 복사합니다:"
+
+#: ../../installation.rst:46
+msgid "Linux: ``~/.config/tabby/plugins``"
+msgstr "Linux: ``~/.config/tabby/plugins``"
+
+#: ../../installation.rst:47
+msgid "macOS: ``~/Library/Application Support/tabby/plugins``"
+msgstr "macOS: ``~/Library/Application Support/tabby/plugins``"
+
+#: ../../installation.rst:48
+msgid "Windows: ``%APPDATA%\\tabby\\plugins``"
+msgstr "Windows: ``%APPDATA%\\tabby\\plugins``"
+
+#: ../../installation.rst:50
+msgid "Restart Tabby so it picks up the newly installed plugin."
+msgstr "새로 설치한 플러그인을 인식하도록 Tabby를 재시작하세요."
+
+#: ../../installation.rst:53
+msgid "Development workflow"
+msgstr "개발 워크플로우"
+
+#: ../../installation.rst:55
+msgid ""
+"If you are iterating on the plugin itself rather than just installing it,"
+" use the watch build instead of a one-off ``npm run build``:"
+msgstr ""
+"단순 설치가 아니라 플러그인 자체를 반복 개발 중이라면, 일회성 ``npm run build`` 대신 감시(watch) 빌드를 "
+"사용하세요:"
+
+#: ../../installation.rst:63
+msgid ""
+"Remember to restart Tabby (or reload its window) after each ``install-"
+"plugin`` run to pick up the new build."
+msgstr ""
+"``install-plugin``\\ 을 실행할 때마다 새 빌드를 적용하려면 Tabby를 재시작하거나 창을 새로고침해야 한다는 점을"
+" 잊지 마세요."
+
+#~ msgid ""
+#~ "This plugin is **not yet published** "
+#~ "to npm or the Tabby Plugin "
+#~ "Manager, so in-app installation "
+#~ "(searching for the plugin from inside"
+#~ " Tabby's *Settings → Plugins* screen) "
+#~ "is **not available yet**. For now "
+#~ "there is only one supported installation"
+#~ " path: cloning the Git repository and"
+#~ " building the plugin from source."
+#~ msgstr ""
+#~ "이 플러그인은 아직 npm이나 Tabby 플러그인 관리자에"
+#~ " **게시되지 않았습니다**. 따라서 Tabby 내부의 *설정"
+#~ " → 플러그인* 화면에서 검색하여 설치하는 앱 내 "
+#~ "설치 방식은 **아직 사용할 수 없습니다**. 현재로서는"
+#~ " Git 저장소를 복제하여 소스에서 직접 빌드하는 방법"
+#~ " 한 가지만 지원됩니다."
+
+#~ msgid ""
+#~ "Once published, this plugin will be "
+#~ "installable directly from Tabby's built-"
+#~ "in plugin manager as *Method 1*; "
+#~ "this page will be updated at that"
+#~ " point to describe that flow as "
+#~ "well."
+#~ msgstr ""
+#~ "게시가 완료되면 이 플러그인은 Tabby에 내장된 플러그인"
+#~ " 관리자에서 바로 *방법 1*\\ 로 설치할 수 "
+#~ "있게 됩니다. 그 시점에 이 페이지도 해당 절차를"
+#~ " 함께 설명하도록 갱신될 예정입니다."
+

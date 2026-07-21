@@ -1,0 +1,264 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, search5
+# This file is distributed under the same license as the tabby-aws-ssm-ssh
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tabby-aws-ssm-ssh 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 23:37+0900\n"
+"PO-Revision-Date: 2026-07-21 23:37+0900\n"
+"Last-Translator: search5\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../usage.rst:2
+msgid "Usage"
+msgstr "사용 방법"
+
+#: ../../usage.rst:5
+msgid "Creating a connection"
+msgstr "접속 생성하기"
+
+#: ../../usage.rst:7
+msgid ""
+"In Tabby, create a new connection and choose the connection type **AWS "
+"SSM SSH**. Fill in the fields described below."
+msgstr ""
+"Tabby에서 새 접속을 만들고 접속 유형으로 **AWS SSM SSH**\\ 를 선택하세요"
+". 아래에 설명된 필드를 채워 넣습니다."
+
+#: ../../usage.rst:11
+msgid "Connection profile fields"
+msgstr "접속 프로파일 필드"
+
+#: ../../usage.rst:17
+msgid "Field"
+msgstr "필드"
+
+#: ../../usage.rst:18
+msgid "Description"
+msgstr "설명"
+
+#: ../../usage.rst:19
+msgid "AWS Region"
+msgstr "AWS Region"
+
+#: ../../usage.rst:20
+msgid "Region the instance lives in, e.g. ``ap-northeast-2``."
+msgstr "인스턴스가 위치한 리전, 예: ``ap-northeast-2``."
+
+#: ../../usage.rst:21
+msgid "Instance ID"
+msgstr "Instance ID"
+
+#: ../../usage.rst:22
+msgid "The EC2 instance ID, e.g. ``i-xxxxxxxxxxxxxxxxx``."
+msgstr "EC2 인스턴스 ID, 예: ``i-xxxxxxxxxxxxxxxxx``."
+
+#: ../../usage.rst:23
+msgid "Connection Type"
+msgstr "Connection Type"
+
+#: ../../usage.rst:24
+msgid ""
+"``AWS SSM Session`` (no key needed) or ``SSH over SSM`` (key pair "
+"required)."
+msgstr ""
+"``AWS SSM Session``\\ (키 불필요) 또는 ``SSH over SSM``\\ (키 페어 필요)"
+"."
+
+#: ../../usage.rst:26
+msgid "Username"
+msgstr "Username"
+
+#: ../../usage.rst:27
+msgid "Login user for **SSH over SSM** mode, e.g. ``ec2-user``."
+msgstr "**SSM을 통한 SSH** 모드의 로그인 사용자, 예: ``ec2-user``."
+
+#: ../../usage.rst:28
+msgid "AWS Connection Auth"
+msgstr "AWS Connection Auth"
+
+#: ../../usage.rst:29
+msgid ""
+"``Use AWS Profile``, ``Static Access Key / Secret``, or ``Retrieve from "
+"KeePass``."
+msgstr ""
+"``Use AWS Profile``, ``Static Access Key / Secret``, 또는 "
+"``Retrieve from KeePass``."
+
+#: ../../usage.rst:31
+msgid "SSH Auth Method *(SSH-over-SSM only)*"
+msgstr "SSH Auth Method *(SSM을 통한 SSH 전용)*"
+
+#: ../../usage.rst:32
+msgid ""
+"``Manual Input / Private Key Path`` (or Vault) or ``Retrieve from "
+"KeePass``."
+msgstr ""
+"``Manual Input / Private Key Path``\\ (또는 Vault) 또는 "
+"``Retrieve from KeePass``."
+
+#: ../../usage.rst:36
+msgid "Choosing a connection type"
+msgstr "접속 유형 선택하기"
+
+#: ../../usage.rst:38
+msgid "**AWS SSM Session**"
+msgstr "**AWS SSM Session**"
+
+#: ../../usage.rst:39
+msgid ""
+"Opens a shell directly through the SSM Agent using only IAM permissions. "
+"No SSH key pair or ``sshd`` is required on the instance. This is the "
+"simplest mode and the recommended default when you just need a shell."
+msgstr ""
+"IAM 권한만으로 SSM 에이전트를 통해 셸을 직접 엽니다. 인스턴스에 SSH 키 "
+"페어나 ``sshd``\\ 가 필요하지 않습니다. 단순히 셸이 필요한 경우 가장 "
+"간단하며 권장되는 기본 모드입니다."
+
+#: ../../usage.rst:43
+msgid "**SSH over SSM**"
+msgstr "**SSH over SSM**"
+
+#: ../../usage.rst:44
+msgid ""
+"Tunnels port 22 through SSM (using the ``AWS-StartSSHSession`` document) "
+"and authenticates with a real SSH key pair, exactly like a normal SSH "
+"connection — except the instance never needs a public IP or an open "
+"security group inbound rule. Use this mode when you need SSH-specific "
+"features (for example, SFTP, port forwarding, or agent forwarding) that "
+"depend on an actual SSH session rather than a bare SSM shell."
+msgstr ""
+"SSM(``AWS-StartSSHSession`` 문서 사용)을 통해 22번 포트를 터널링하고, "
+"일반 SSH 접속과 완전히 동일하게 실제 SSH 키 페어로 인증합니다 — 다만 "
+"인스턴스에 퍼블릭 IP나 개방된 보안 그룹 인바운드 규칙이 전혀 필요 "
+"없습니다. SFTP, 포트 포워딩, 에이전트 포워딩처럼 단순한 SSM 셸이 아니라 "
+"실제 SSH 세션에 의존하는 SSH 전용 기능이 필요할 때 이 모드를 "
+"사용하세요."
+
+#: ../../usage.rst:52
+msgid "AWS credential options"
+msgstr "AWS 자격 증명 옵션"
+
+#: ../../usage.rst:54
+msgid ""
+"The plugin supports three ways to supply AWS credentials (**AWS "
+"Connection Auth**):"
+msgstr ""
+"이 플러그인은 AWS 자격 증명을 제공하는 세 가지 방법(**AWS Connection "
+"Auth**)을 지원합니다:"
+
+#: ../../usage.rst:57
+msgid ""
+"**Use AWS Profile** — a named profile from ``~/.aws/config`` / "
+"``~/.aws/credentials``, including profiles that use "
+"``credential_process``."
+msgstr ""
+"**Use AWS Profile** — ``~/.aws/config`` / ``~/.aws/credentials``\\ 에서 "
+"이름이 지정된 프로파일을 사용합니다. ``credential_process``\\ 를 "
+"사용하는 프로파일도 포함됩니다."
+
+#: ../../usage.rst:60
+msgid ""
+"**Static Access Key / Secret** — an access key ID and secret access key "
+"entered directly."
+msgstr ""
+"**Static Access Key / Secret** — 액세스 키 ID와 시크릿 액세스 키를 직접 "
+"입력합니다."
+
+#: ../../usage.rst:62
+msgid ""
+"**Retrieve from KeePass** — credentials looked up from a KeePass entry "
+"(see below)."
+msgstr ""
+"**Retrieve from KeePass** — KeePass 항목에서 자격 증명을 조회합니다 "
+"(아래 참고)."
+
+#: ../../usage.rst:66
+msgid "SSH credential options (SSH-over-SSM mode only)"
+msgstr "SSH 자격 증명 옵션 (SSM을 통한 SSH 모드 전용)"
+
+#: ../../usage.rst:68
+msgid ""
+"**Manual Input / Private Key Path** — a private key file path, or a key "
+"stored in Tabby's Vault."
+msgstr ""
+"**Manual Input / Private Key Path** — 개인 키 파일 경로, 또는 Tabby "
+"Vault에 저장된 키를 사용합니다."
+
+#: ../../usage.rst:70
+msgid "**Retrieve from KeePass** — a key attached to a KeePass entry (see below)."
+msgstr ""
+"**Retrieve from KeePass** — KeePass 항목에 첨부된 키를 사용합니다 (아래 "
+"참고)."
+
+#: ../../usage.rst:73
+msgid "KeePass lookup"
+msgstr "KeePass 조회 방식"
+
+#: ../../usage.rst:75
+msgid ""
+"KeePass-backed credentials require the `tabby-ssh-keepass "
+"<https://github.com/search5/tabby-ssh-keepass>`_ plugin to be installed "
+"and configured (see :doc:`prerequisites`)."
+msgstr ""
+"KeePass 기반 자격 증명을 사용하려면 `tabby-ssh-keepass "
+"<https://github.com/search5/tabby-ssh-keepass>`_ 플러그인이 설치되고 "
+"설정되어 있어야 합니다 (:doc:`prerequisites` 참고)."
+
+#: ../../usage.rst:79
+msgid ""
+"When ``Retrieve from KeePass`` is selected for either AWS or SSH "
+"credentials, the plugin looks up a KeePass entry as follows:"
+msgstr ""
+"AWS 또는 SSH 자격 증명에 ``Retrieve from KeePass``\\ 를 선택하면, "
+"플러그인은 다음과 같은 방식으로 KeePass 항목을 조회합니다:"
+
+#: ../../usage.rst:82
+msgid "It searches for an entry whose **URL** field is ``ssh://<instanceId>``."
+msgstr "**URL** 필드가 ``ssh://<instanceId>``\\ 인 항목을 먼저 찾습니다."
+
+#: ../../usage.rst:83
+msgid ""
+"If no entry has a matching URL, it falls back to an entry whose **Title**"
+" matches the instance ID."
+msgstr ""
+"URL이 일치하는 항목이 없으면, **Title**\\ 이 인스턴스 ID와 일치하는 "
+"항목으로 대체하여 찾습니다."
+
+#: ../../usage.rst:86
+msgid "From the matched entry:"
+msgstr "일치한 항목으로부터:"
+
+#: ../../usage.rst:88
+msgid ""
+"AWS access key and secret are read from the custom fields ``AWS Access "
+"ID`` and ``AWS Secret Key``."
+msgstr ""
+"AWS 액세스 키와 시크릿은 사용자 지정 필드 ``AWS Access ID``\\ 와 ``AWS "
+"Secret Key``\\ 에서 읽어옵니다."
+
+#: ../../usage.rst:90
+msgid "The SSH private key is read from a file attached to the entry."
+msgstr "SSH 개인 키는 해당 항목에 첨부된 파일에서 읽어옵니다."
+
+#: ../../usage.rst:94
+msgid ""
+"Keep one KeePass entry per instance, named (or tagged via its URL field) "
+"after the instance ID, and store both the AWS credential fields and the "
+"attached private key on that same entry — this lets a single entry serve "
+"both the AWS SSM Session and SSH-over-SSM lookups described above."
+msgstr ""
+"인스턴스 ID를 이름으로 사용하거나 URL 필드에 태그로 지정하여 인스턴스당 "
+"KeePass 항목을 하나씩 유지하고, 같은 항목에 AWS 자격 증명 필드와 첨부된 "
+"개인 키를 함께 저장하세요 — 이렇게 하면 하나의 항목으로 위에서 설명한 "
+"AWS SSM Session 조회와 SSH-over-SSM 조회를 모두 처리할 수 있습니다."

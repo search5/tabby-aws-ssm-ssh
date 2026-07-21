@@ -1,0 +1,70 @@
+name: Deploy documentation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install Sphinx toolchain as a uv tool
+        run: uv tool install sphinx --with sphinx-book-theme --with sphinx-intl --with-executables-from sphinx-intl
+
+      - name: Add uv tool bin directory to PATH
+        run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build Korean message catalogs (.mo)
+        working-directory: docs
+        run: sphinx-intl build --locale-dir locale
+
+      - name: Build multilingual HTML docs
+        working-directory: docs
+        run: make html-all
+
+      - name: Build multilingual EPUB docs
+        working-directory: docs
+        run: make epub-all
+
+      - name: Copy EPUB output into the HTML site
+        working-directory: docs
+        run: |
+          mkdir -p _build/html/epub
+          cp _build/epub/en/tabby-aws-ssm-ssh.epub _build/html/epub/tabby-aws-ssm-ssh-en.epub
+          cp _build/epub/ko/tabby-aws-ssm-ssh.epub _build/html/epub/tabby-aws-ssm-ssh-ko.epub
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

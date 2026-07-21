@@ -1,0 +1,268 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, search5
+# This file is distributed under the same license as the tabby-aws-ssm-ssh
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tabby-aws-ssm-ssh 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 23:37+0900\n"
+"PO-Revision-Date: 2026-07-21 23:37+0900\n"
+"Last-Translator: search5\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../architecture.rst:2
+msgid "Architecture"
+msgstr "아키텍처"
+
+#: ../../architecture.rst:4
+msgid ""
+"**tabby-aws-ssm-ssh** is an Angular-based Tabby plugin, written in "
+"TypeScript. It uses ``@aws-sdk/client-ssm`` to start SSM sessions and a "
+"raw WebSocket (``ws``) to speak the SSM Agent's binary data-channel "
+"protocol, optionally wrapping that channel with an ``ssh2`` client for "
+"the SSH-over-SSM mode."
+msgstr ""
+"**tabby-aws-ssm-ssh**\\ 는 TypeScript로 작성된 Angular 기반 Tabby "
+"플러그인입니다. ``@aws-sdk/client-ssm``\\ 을 사용해 SSM 세션을 시작하고,"
+" 순수 WebSocket(``ws``)으로 SSM 에이전트의 바이너리 데이터 채널 프로토콜"
+"을 처리하며, SSH-over-SSM 모드에서는 필요에 따라 그 채널을 ``ssh2`` "
+"클라이언트로 감쌉니다."
+
+#: ../../architecture.rst:10
+msgid ""
+"The source tree has six files under ``src/``, each centered on one core "
+"symbol:"
+msgstr ""
+"소스 트리는 ``src/`` 아래 6개의 파일로 구성되며, 각 파일은 하나의 핵심 "
+"심볼을 중심으로 되어 있습니다:"
+
+#: ../../architecture.rst:17
+msgid "File"
+msgstr "파일"
+
+#: ../../architecture.rst:18
+msgid "Responsibility"
+msgstr "역할"
+
+#: ../../architecture.rst:19
+msgid "``src/index.ts``"
+msgstr "``src/index.ts``"
+
+#: ../../architecture.rst:20
+msgid ""
+"Plugin entry point — an Angular ``@NgModule`` (``TunnelSshModule``) that "
+"registers the other components and the profile provider."
+msgstr ""
+"플러그인 진입점 — 다른 컴포넌트들과 프로파일 제공자를 등록하는 Angular "
+"``@NgModule``\\ (``TunnelSshModule``)."
+
+#: ../../architecture.rst:22
+msgid "``src/profiles.ts``"
+msgstr "``src/profiles.ts``"
+
+#: ../../architecture.rst:23
+msgid ""
+"Defines the ``AwsSsmSshProfile`` connection-profile shape and "
+"``AwsSsmSshProfileProvider``, Tabby's extension point for adding a new "
+"connection type."
+msgstr ""
+"``AwsSsmSshProfile`` 접속 프로파일 형태와, 새로운 접속 유형을 추가하기 "
+"위한 Tabby의 확장 지점인 ``AwsSsmSshProfileProvider``\\ 를 정의합니다."
+
+#: ../../architecture.rst:26
+msgid "``src/components/awsSsmSshSettings.component.ts``"
+msgstr "``src/components/awsSsmSshSettings.component.ts``"
+
+#: ../../architecture.rst:27
+msgid ""
+"The connection settings UI (region, instance ID, credential options, etc."
+" — see :doc:`usage`)."
+msgstr ""
+"접속 설정 UI (리전, 인스턴스 ID, 자격 증명 옵션 등 — :doc:`usage` 참고)"
+"."
+
+#: ../../architecture.rst:29
+msgid "``src/components/tunnelSshTab.component.ts``"
+msgstr "``src/components/tunnelSshTab.component.ts``"
+
+#: ../../architecture.rst:30
+msgid ""
+"The terminal tab UI; creates and owns a ``TunnelSshSession`` for each "
+"opened tab."
+msgstr ""
+"터미널 탭 UI. 열린 탭마다 ``TunnelSshSession``\\ 을 생성하고 소유합니다."
+
+#: ../../architecture.rst:32
+msgid "``src/session/tunnelSsh.session.ts``"
+msgstr "``src/session/tunnelSsh.session.ts``"
+
+#: ../../architecture.rst:33
+msgid ""
+"Session orchestration — calls the AWS SSM ``StartSession`` API and wires "
+"the resulting stream into an SSH client when needed."
+msgstr ""
+"세션 오케스트레이션 — AWS SSM ``StartSession`` API를 호출하고, 필요할 "
+"때 그 결과 스트림을 SSH 클라이언트에 연결합니다."
+
+#: ../../architecture.rst:35
+msgid "``src/tunnel/awsSsm.tunnel.ts``"
+msgstr "``src/tunnel/awsSsm.tunnel.ts``"
+
+#: ../../architecture.rst:36
+msgid ""
+"Implements the SSM Agent's binary WebSocket data-channel protocol as a "
+"Node.js ``Duplex`` stream."
+msgstr ""
+"SSM 에이전트의 바이너리 WebSocket 데이터 채널 프로토콜을 Node.js "
+"``Duplex`` 스트림으로 구현합니다."
+
+#: ../../architecture.rst:40
+msgid "Component relationships"
+msgstr "컴포넌트 관계"
+
+#: ../../architecture.rst:61
+msgid "Key classes"
+msgstr "주요 클래스"
+
+#: ../../architecture.rst:63
+msgid "``AwsSsmSshProfileProvider`` (``src/profiles.ts``)"
+msgstr "``AwsSsmSshProfileProvider`` (``src/profiles.ts``)"
+
+#: ../../architecture.rst:64
+msgid ""
+"Extends Tabby's ``ProfileProvider<AwsSsmSshProfile>``. Registers the "
+"profile type under id ``aws-ssm-ssh`` / display name ``AWS SSM SSH``, "
+"supplies built-in profile templates via ``getBuiltinProfiles()``, points "
+"new tabs at ``TunnelSshTabComponent`` via ``getNewTabParameters()``, and "
+"formats the profile's short description (``\"instanceId (region)\"``) via"
+" ``getDescription()``."
+msgstr ""
+"Tabby의 ``ProfileProvider<AwsSsmSshProfile>``\\ 를 확장합니다. id "
+"``aws-ssm-ssh`` / 표시 이름 ``AWS SSM SSH``\\ 로 프로파일 유형을 "
+"등록하고, ``getBuiltinProfiles()``\\ 를 통해 내장 프로파일 템플릿을 "
+"제공하며, ``getNewTabParameters()``\\ 를 통해 새 탭이 "
+"``TunnelSshTabComponent``\\ 를 사용하도록 지정하고, "
+"``getDescription()``\\ 을 통해 프로파일의 짧은 설명(``\"instanceId "
+"(region)\"``)을 형식화합니다."
+
+#: ../../architecture.rst:71
+msgid "``TunnelSshTabComponent`` (``src/components/tunnelSshTab.component.ts``)"
+msgstr "``TunnelSshTabComponent`` (``src/components/tunnelSshTab.component.ts``)"
+
+#: ../../architecture.rst:72
+msgid ""
+"Extends Tabby's ``ConnectableTerminalTabComponent<AwsSsmSshProfile>``. On"
+" initialization it builds a ``TunnelSshSession`` for the active profile "
+"and attaches it to the tab via ``setSession()``."
+msgstr ""
+"Tabby의 ``ConnectableTerminalTabComponent<AwsSsmSshProfile>``\\ 를 "
+"확장합니다. 초기화 시 활성 프로파일에 대한 ``TunnelSshSession``\\ 을 "
+"생성하고 ``setSession()``\\ 을 통해 탭에 연결합니다."
+
+#: ../../architecture.rst:76
+msgid "``TunnelSshSession`` (``src/session/tunnelSsh.session.ts``)"
+msgstr "``TunnelSshSession`` (``src/session/tunnelSsh.session.ts``)"
+
+#: ../../architecture.rst:77
+msgid ""
+"The core orchestrator. ``start()`` kicks off the session; internally, "
+"``createAwsSsmTunnel()`` calls the AWS SSM ``StartSessionCommand`` and "
+"feeds the resulting stream URL/token into a new ``AwsSsmTunnelStream``. "
+"For SSH-over-SSM profiles, that tunnel stream is piped into an ``ssh2`` "
+"client instead of being treated as a raw shell. Exposes the usual "
+"terminal-tab lifecycle methods: ``write()``, ``resize()``, ``kill()``, "
+"``gracefullyKillProcess()``, ``destroy()``."
+msgstr ""
+"핵심 오케스트레이터입니다. ``start()``\\ 가 세션을 시작하며, 내부적으로"
+" ``createAwsSsmTunnel()``\\ 이 AWS SSM ``StartSessionCommand``\\ 를 "
+"호출하고 그 결과 스트림 URL/토큰을 새 ``AwsSsmTunnelStream``\\ 에 "
+"전달합니다. SSH-over-SSM 프로파일의 경우, 그 터널 스트림은 단순 셸로 "
+"취급되지 않고 ``ssh2`` 클라이언트로 파이핑됩니다. ``write()``, "
+"``resize()``, ``kill()``, ``gracefullyKillProcess()``, ``destroy()``\\ "
+"등 일반적인 터미널 탭 생명주기 메서드를 제공합니다."
+
+#: ../../architecture.rst:85
+msgid "``AwsSsmTunnelStream`` (``src/tunnel/awsSsm.tunnel.ts``)"
+msgstr "``AwsSsmTunnelStream`` (``src/tunnel/awsSsm.tunnel.ts``)"
+
+#: ../../architecture.rst:86
+msgid ""
+"A Node.js ``Duplex`` stream wrapping a WebSocket connection to the SSM "
+"data channel. Implements the SSM Agent's binary framing directly: "
+"``encodeMessage()`` / ``decodeMessage()`` handle the ``AgentMessage`` "
+"frame format (message type, message ID, sequence number, flags, payload "
+"type, payload), ``generateUuidBytes()`` / ``parseUuid()`` handle the per-"
+"message UUIDs, and ``sendAck()`` emits the ACK frames the protocol "
+"requires. ``_read()`` / ``_write()`` / ``_destroy()`` implement the "
+"Duplex stream contract so the rest of the plugin can treat the tunnel "
+"like any other Node stream."
+msgstr ""
+"SSM 데이터 채널로의 WebSocket 연결을 감싸는 Node.js ``Duplex`` "
+"스트림입니다. SSM 에이전트의 바이너리 프레이밍을 직접 구현합니다: "
+"``encodeMessage()`` / ``decodeMessage()``\\ 는 ``AgentMessage`` 프레임 "
+"형식(메시지 타입, 메시지 ID, 시퀀스 번호, 플래그, 페이로드 타입, "
+"페이로드)을 처리하고, ``generateUuidBytes()`` / ``parseUuid()``\\ 는 "
+"메시지별 UUID를 처리하며, ``sendAck()``\\ 는 프로토콜이 요구하는 ACK "
+"프레임을 전송합니다. ``_read()`` / ``_write()`` / ``_destroy()``\\ 는 "
+"Duplex 스트림 계약을 구현하여 플러그인의 나머지 부분이 이 터널을 다른 "
+"Node 스트림과 동일하게 다룰 수 있게 합니다."
+
+#: ../../architecture.rst:97
+msgid "End-to-end flow"
+msgstr "전체 흐름"
+
+#: ../../architecture.rst:99
+msgid ""
+"``AwsSsmSshProfileProvider`` registers the profile type and its settings "
+"UI with Tabby."
+msgstr ""
+"``AwsSsmSshProfileProvider``\\ 가 프로파일 유형과 그 설정 UI를 Tabby에 "
+"등록합니다."
+
+#: ../../architecture.rst:101
+msgid ""
+"The user opens a tab for a saved profile; ``TunnelSshTabComponent`` "
+"creates a ``TunnelSshSession``."
+msgstr ""
+"사용자가 저장된 프로파일의 탭을 열면, ``TunnelSshTabComponent``\\ 가 "
+"``TunnelSshSession``\\ 을 생성합니다."
+
+#: ../../architecture.rst:103
+msgid ""
+"``TunnelSshSession`` calls the AWS SSM ``StartSession`` API, obtaining a "
+"WebSocket stream URL and token."
+msgstr ""
+"``TunnelSshSession``\\ 이 AWS SSM ``StartSession`` API를 호출하여 "
+"WebSocket 스트림 URL과 토큰을 얻습니다."
+
+#: ../../architecture.rst:105
+msgid ""
+"Those are handed to ``AwsSsmTunnelStream``, which opens the WebSocket and"
+" speaks the SSM binary protocol, exposing itself as a Node ``Duplex`` "
+"stream."
+msgstr ""
+"이 값들은 ``AwsSsmTunnelStream``\\ 에 전달되며, 이 스트림이 WebSocket을"
+" 열고 SSM 바이너리 프로토콜을 처리하면서 스스로를 Node ``Duplex`` "
+"스트림으로 노출합니다."
+
+#: ../../architecture.rst:108
+msgid ""
+"In **AWS SSM Session** mode, that Duplex stream *is* the terminal "
+"session. In **SSH over SSM** mode, the Duplex stream is instead piped "
+"into an ``ssh2`` client, which performs the SSH handshake and "
+"authentication over the tunnel, and the resulting SSH channel becomes the"
+" terminal session."
+msgstr ""
+"**AWS SSM Session** 모드에서는 이 Duplex 스트림 자체가 터미널 세션입니"
+"다. **SSH over SSM** 모드에서는 대신 이 Duplex 스트림이 ``ssh2`` "
+"클라이언트로 파이핑되어, 터널을 통해 SSH 핸드셰이크와 인증을 수행하고, "
+"그 결과로 생성된 SSH 채널이 터미널 세션이 됩니다."
