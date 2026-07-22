@@ -34,6 +34,7 @@ gettext_compact = False
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
 html_templates_path = ['_templates']
+html_js_files = ['custom.js']
 
 html_theme_options = {
     "repository_url": "https://github.com/search5/tabby-aws-ssm-ssh",
@@ -53,7 +54,7 @@ epub_title = project
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright
-epub_exclude_files = ['search.html', '_static/switcher.json']
+epub_exclude_files = ['search.html', '_static/switcher.json', '_static/custom.js']
 
 
 # -- Dynamic per-language titles (HTML tab title & EPUB title) ---------------
