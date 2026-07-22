@@ -1,6 +1,6 @@
 {
   "name": "tabby-aws-ssm-ssh",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AWS SSM SSH plugin for Tabby",
   "author": "Ji-Ho, Lee <search5@gmail.com>",
   "license": "MIT",
