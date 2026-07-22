@@ -1,9 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProfileProvider } from 'tabby-core';
+import { ProfileProvider, TabRecoveryProvider } from 'tabby-core';
 
 import { AwsSsmSshProfileProvider } from './profiles';
+import { AwsSsmSshRecoveryProvider } from './recoveryProvider';
 import { AwsSsmSshSettingsComponent } from './components/awsSsmSshSettings.component';
 import { TunnelSshTabComponent } from './components/tunnelSshTab.component';
 import { PrivateKeyPromptModalComponent } from './components/privateKeyPromptModal.component';
@@ -26,6 +27,7 @@ console.log('[tabby-aws-ssm-ssh] module loaded');
     ],
     providers: [
         { provide: ProfileProvider, useClass: AwsSsmSshProfileProvider, multi: true },
+        { provide: TabRecoveryProvider, useClass: AwsSsmSshRecoveryProvider, multi: true },
     ],
 })
 export default class TunnelSshModule { }
