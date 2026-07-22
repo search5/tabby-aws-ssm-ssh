@@ -14,6 +14,7 @@ A [Tabby](https://tabby.sh) terminal plugin that connects to EC2 instances throu
 - **Flexible AWS credentials** — use a named AWS CLI profile (`~/.aws/config` / `~/.aws/credentials`, including `credential_process`-based profiles), a static access key/secret, or credentials pulled from a KeePass entry.
 - **Flexible SSH credentials** (SSH-over-SSM mode) — a private key file path, a key stored in Tabby's Vault, or a key attached to a KeePass entry.
 - **KeePass integration** — works with [tabby-ssh-keepass](https://github.com/search5/tabby-ssh-keepass) to look up AWS credentials and/or SSH private keys from a KeePass database, matched by instance ID.
+- **Tab recovery** — if Tabby restarts, open tabs reopen automatically and reconnect to the same instance, with the terminal scrollback restored.
 
 ## Requirements
 

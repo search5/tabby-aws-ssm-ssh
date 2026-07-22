@@ -14,6 +14,7 @@
 - **유연한 AWS 자격 증명** — 이름 있는 AWS CLI 프로필(`~/.aws/config` / `~/.aws/credentials`, `credential_process` 기반 프로필 포함), 정적 액세스 키/시크릿, 또는 KeePass 엔트리에서 가져온 자격 증명을 사용할 수 있습니다.
 - **유연한 SSH 자격 증명** (SSH-over-SSM 모드) — 개인키 파일 경로, Tabby Vault에 저장된 키, 또는 KeePass 엔트리에 첨부된 키를 사용할 수 있습니다.
 - **KeePass 연동** — [tabby-ssh-keepass](https://github.com/search5/tabby-ssh-keepass)와 연동해서 인스턴스 ID로 매칭되는 AWS 자격 증명/SSH 개인키를 KeePass 데이터베이스에서 조회합니다.
+- **탭 복구** — Tabby가 재시작되면, 열려있던 탭이 자동으로 다시 열리고 같은 인스턴스에 재연결되며 터미널 스크롤백도 복원됩니다.
 
 ## 요구 사항
 
